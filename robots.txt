@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://simonsenutleie.no/sitemap.xml
