@@ -229,7 +229,7 @@
         } else {
             // Velg slutt — must be ≥ 3 days after start
             const minSlutt = new Date(valgtStart);
-            minSlutt.setDate(minSlutt.getDate() + 3);
+            minSlutt.setDate(minSlutt.getDate() + 2);
             const minSluttStr = minSlutt.toISOString().split('T')[0];
 
             if (dato < minSluttStr) {
@@ -364,7 +364,7 @@
         const slutt  = document.getElementById('sluttdato').value;
         const boks   = document.getElementById('pris-boks');
         if (!utstyr || !start || !slutt) { boks.style.display = 'none'; return; }
-        const dager = Math.round((new Date(slutt) - new Date(start)) / (1000 * 60 * 60 * 24));
+        const dager = Math.round((new Date(slutt) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1;
         if (dager < 1) { boks.style.display = 'none'; return; }
         const p = priser[utstyr.value];
         const dagsprisHelg = Math.round(p.helg / 3);
