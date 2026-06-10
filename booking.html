@@ -64,15 +64,15 @@
         <label>Hva ønsker du å leie? *</label>
         <div class="radio-gruppe">
             <label class="radio-valg">
-                <input type="radio" name="utstyr" value="JBL PartyBox 320" required onchange="beregnPris()">
+                <input type="radio" name="utstyr" value="JBL PartyBox 320" required onchange="utstyrEndret()">
                 JBL PartyBox 320 – fra 500 kr / 3 dager
             </label>
             <label class="radio-valg">
-                <input type="radio" name="utstyr" value="Trådløse Mikrofoner (2 stk)" onchange="beregnPris()">
+                <input type="radio" name="utstyr" value="Trådløse Mikrofoner (2 stk)" onchange="utstyrEndret()">
                 Trådløse Mikrofoner (2 stk) – fra 100 kr / 3 dager
             </label>
             <label class="radio-valg">
-                <input type="radio" name="utstyr" value="Begge deler" onchange="beregnPris()">
+                <input type="radio" name="utstyr" value="Begge deler" onchange="utstyrEndret()">
                 Begge deler – fra 600 kr / 3 dager
             </label>
         </div>
@@ -192,12 +192,33 @@
         return `${ar}-${String(mnd+1).padStart(2,'0')}-${String(dag).padStart(2,'0')}`;
     }
 
+    function getUtstyrType() {
+        const el = document.querySelector('input[name="utstyr"]:checked');
+        if (!el) return 'both';
+        if (el.value.includes('Mikrofon')) return 'mic';
+        if (el.value.includes('Begge')) return 'both';
+        return 'speaker';
+    }
+
+    function blokkererUtstyr(bookingType, valgtType) {
+        const bt = bookingType || 'both';
+        if (bt === 'both') return true;       // gammel/begge blokkerer alltid
+        if (valgtType === 'both') return true; // ønsker begge → blokkert av hva som helst
+        return bt === valgtType;
+    }
+
     function erOpptatt(d) {
-        return bookedePeriodar.some(b => d >= b.startDate && d <= b.endDate);
+        const valgtType = getUtstyrType();
+        return bookedePeriodar.some(b =>
+            d >= b.startDate && d <= b.endDate && blokkererUtstyr(b.equipmentType, valgtType)
+        );
     }
 
     function rangeHarKonflikt(s, e) {
-        return bookedePeriodar.some(b => b.startDate <= e && b.endDate >= s);
+        const valgtType = getUtstyrType();
+        return bookedePeriodar.some(b =>
+            b.startDate <= e && b.endDate >= s && blokkererUtstyr(b.equipmentType, valgtType)
+        );
     }
 
     function norskDato(d) {
@@ -357,6 +378,11 @@
         } catch(e) {}
         tegneKalender();
     });
+
+    function utstyrEndret() {
+        nullstillDatoer();
+        beregnPris();
+    }
 
     function beregnPris() {
         const utstyr = document.querySelector('input[name="utstyr"]:checked');
