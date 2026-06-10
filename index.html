@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="no">
+
 <head>
-<meta name="description" content="Lei kraftig JBL-høyttaler og mikrofon i Stavanger. Rask booking, lave priser og gratis levering i nærområdet.">
-<meta name="keywords" content="leie høyttaler Stavanger, leie mikrofon Stavanger, JBL høyttaler utleie, lydutstyr Stavanger, høyttaler utleie, mikrofon utleie">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leie høyttaler og mikrofon i Stavanger | Simonsen Utleie</title>
+<title>Simonsen Fjord & Fest – Utleie av lydutstyr</title>
 <link rel="stylesheet" href="style.css?v=106">
 <link rel="icon" type="image/png" href="logo.png">
 <style>
@@ -26,6 +25,9 @@
         background-color: #ccc;
         border-radius: 10px;
     }
+    .kal-dag.opptatt-speaker { background:#3b82f6 !important; color:#fff; cursor:default; }
+    .kal-dag.opptatt-mic     { background:#f59e0b !important; color:#fff; cursor:default; }
+    .kal-dag.opptatt-begge   { background:#ef4444 !important; color:#fff; cursor:default; }
 </style>
 </head>
 
@@ -94,8 +96,10 @@
 </div>
 <div class="kal-grid" id="kalGrid"></div>
 <div class="kal-forklaring">
-<span class="kal-dot rød"></span> Opptatt
-<span class="kal-dot blå" style="margin-left:16px"></span> I dag
+<span class="kal-dot" style="background:#3b82f6;display:inline-block;width:10px;height:10px;border-radius:50%;"></span> 🔊 Opptatt
+<span class="kal-dot" style="background:#f59e0b;display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:12px"></span> 🎤 Opptatt
+<span class="kal-dot" style="background:#ef4444;display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:12px"></span> Begge opptatt
+<span class="kal-dot blå" style="margin-left:12px"></span> I dag
 </div>
 </div>
 </section>
@@ -269,8 +273,19 @@
     function datoNokkel(d) {
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     }
-    function erOpptatt(nokkel) {
-        return opptatteDatoer.some(b => nokkel >= b.startDate && nokkel <= b.endDate);
+    function statusForDag(nokkel) {
+        let harSpeaker = false, harMic = false;
+        for (const b of opptatteDatoer) {
+            if (nokkel < b.startDate || nokkel > b.endDate) continue;
+            const t = b.equipmentType || 'both';
+            if (t === 'both') return 'begge';
+            if (t === 'speaker') harSpeaker = true;
+            if (t === 'mic')     harMic     = true;
+        }
+        if (harSpeaker && harMic) return 'begge';
+        if (harSpeaker) return 'speaker';
+        if (harMic)     return 'mic';
+        return null;
     }
 
     async function hentOpptatteDager() {
@@ -310,7 +325,8 @@
             const cell   = document.createElement('div');
             cell.className = 'kal-dag';
             cell.textContent = dag;
-            if (erOpptatt(nokkel))           cell.classList.add('opptatt');
+            const dagStatus = statusForDag(nokkel);
+            if (dagStatus)                   cell.classList.add('opptatt-' + dagStatus);
             else if (nokkel === idagNokkel)  cell.classList.add('idag');
             grid.appendChild(cell);
         }
