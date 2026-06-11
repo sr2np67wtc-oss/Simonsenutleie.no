@@ -62,19 +62,8 @@
 
     <div class="form-felt">
         <label>Hva ønsker du å leie? *</label>
-        <div class="radio-gruppe">
-            <label class="radio-valg">
-                <input type="radio" name="utstyr" value="JBL PartyBox 320" required onchange="utstyrEndret()">
-                JBL PartyBox 320 – fra 500 kr / 3 dager
-            </label>
-            <label class="radio-valg">
-                <input type="radio" name="utstyr" value="Trådløse Mikrofoner (2 stk)" onchange="utstyrEndret()">
-                Trådløse Mikrofoner (2 stk) – fra 100 kr / 3 dager
-            </label>
-            <label class="radio-valg">
-                <input type="radio" name="utstyr" value="Begge deler" onchange="utstyrEndret()">
-                Begge deler – fra 600 kr / 3 dager
-            </label>
+        <div class="radio-gruppe" id="utstyr-valg">
+            <p style="color:#888;font-size:13px">Laster produkter...</p>
         </div>
     </div>
 
@@ -167,17 +156,37 @@
         if (meny.classList.contains('aapen') && !meny.contains(e.target) && !btn.contains(e.target)) lukkMeny();
     });
 
-    /* ── Prisberegning ── */
-    const priser = {
-        "JBL PartyBox 320":            { helg: 500, uke: 800 },
-        "Trådløse Mikrofoner (2 stk)": { helg: 100, uke: 150 },
-        "Begge deler":                 { helg: 600, uke: 950 }
-    };
-
+    /* ── Produkter (lastes fra API) ── */
+    const API_BASE = 'https://simonsen-utleie-format.replit.app/api';
+    let utleieProduktene = [];
     let beregnetPris = "";
 
+    async function lastProduktene() {
+        try {
+            const r = await fetch(`${API_BASE}/rental-products`);
+            utleieProduktene = await r.json();
+        } catch { utleieProduktene = []; }
+
+        const container = document.getElementById('utstyr-valg');
+        if (utleieProduktene.length === 0) {
+            container.innerHTML = '<p style="color:#c00;font-size:13px">Klarte ikke laste produkter. Prøv igjen.</p>';
+            return;
+        }
+        container.innerHTML = utleieProduktene.map((p, i) =>
+            `<label class="radio-valg">
+                <input type="radio" name="utstyr" value="${p.name}"${i===0?' required':''} onchange="utstyrEndret()">
+                ${p.name} – fra ${p.weekendPrice.toLocaleString('no-NO')} kr / 3 dager
+            </label>`
+        ).join('');
+    }
+
+    function prisForProdukt(navn) {
+        const p = utleieProduktene.find(p => p.name === navn);
+        if (!p) return null;
+        return { helg: p.weekendPrice, uke: p.weekPrice };
+    }
+
     /* ── Kalender ── */
-    const API_BASE = 'https://simonsen-utleie-format.replit.app/api';
     let bookedePeriodar = [];
 
     // Kalender-tilstand
@@ -195,9 +204,8 @@
     function getUtstyrType() {
         const el = document.querySelector('input[name="utstyr"]:checked');
         if (!el) return 'both';
-        if (el.value.includes('Mikrofon')) return 'mic';
-        if (el.value.includes('Begge')) return 'both';
-        return 'speaker';
+        const p = utleieProduktene.find(p => p.name === el.value);
+        return p ? p.equipmentType : 'speaker';
     }
 
     function blokkererUtstyr(bookingType, valgtType) {
@@ -372,6 +380,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', async function() {
+        await lastProduktene();
         try {
             const r = await fetch(`${API_BASE}/bookings`);
             if (r.ok) bookedePeriodar = await r.json();
@@ -392,7 +401,7 @@
         if (!utstyr || !start || !slutt) { boks.style.display = 'none'; return; }
         const dager = Math.round((new Date(slutt) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1;
         if (dager < 1) { boks.style.display = 'none'; return; }
-        const p = priser[utstyr.value];
+        const p = prisForProdukt(utstyr.value);
         const dagsprisHelg = Math.round(p.helg / 3);
         const dagsprisUke  = Math.round(p.uke  / 7);
         let totalPris, periodeText;
