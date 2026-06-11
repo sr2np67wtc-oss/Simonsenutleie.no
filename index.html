@@ -330,7 +330,7 @@
                     ${p.description ? `<p>${p.description}</p>` : ''}
                     <p class="price">${p.weekendPrice.toLocaleString('no-NO')} kr / Helg (3 dager)</p>
                     <p class="price">${p.weekPrice.toLocaleString('no-NO')} kr / Uke (7 dager)</p>
-                    <a href="booking.html" class="bestill-btn">Bestill</a>
+                    <a href="booking.html?produkt=${encodeURIComponent(p.name)}" class="bestill-btn">Bestill</a>
                 </div>`).join('');
         } catch { /* beholder skeleton */ }
     }

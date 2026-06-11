@@ -381,6 +381,12 @@
 
     window.addEventListener('DOMContentLoaded', async function() {
         await lastProduktene();
+        const forhåndsValgt = new URLSearchParams(window.location.search).get('produkt');
+        if (forhåndsValgt) {
+            for (const radio of document.querySelectorAll('input[name="utstyr"]')) {
+                if (radio.value === forhåndsValgt) { radio.checked = true; utstyrEndret(); break; }
+            }
+        }
         try {
             const r = await fetch(`${API_BASE}/bookings`);
             if (r.ok) bookedePeriodar = await r.json();
