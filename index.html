@@ -28,6 +28,12 @@
     .kal-dag.opptatt-speaker { background:#7c3aed !important; color:#fff; cursor:default; }
     .kal-dag.opptatt-mic     { background:#f59e0b !important; color:#fff; cursor:default; }
     .kal-dag.opptatt-begge   { background: linear-gradient(90deg, #7c3aed 50%, #f59e0b 50%) !important; color:#fff; cursor:default; }
+    @media (max-width: 640px) {
+        #product-list { grid-template-columns: 1fr !important; }
+    }
+    @media (min-width: 641px) and (max-width: 900px) {
+        #product-list { grid-template-columns: repeat(2, 1fr) !important; }
+    }
 </style>
 </head>
 
@@ -57,18 +63,22 @@
 
 <main>
 
-<!-- RAD 1: Produkter + Kalender -->
-<div class="rad topp-rad">
+<!-- RAD 1: Produkter – full bredde, 3 kolonner -->
+<div class="rad" id="utleie-rad">
 <section id="utleie">
 <h2>Utleieprodukter</h2>
-<div class="products" id="product-list">
+<div class="products" id="product-list" style="grid-template-columns:repeat(3,1fr)">
 <p style="color:#888;font-size:13px">Laster produkter...</p>
 </div>
 <p class="delivery-summary">🚚 Levering og henting er inkludert i prisen innenfor Stavanger‑området.</p>
 </section>
+</div>
 
-<section id="kalender" class="calendar">
+<!-- RAD 1b: Kalender – sentrert -->
+<div class="rad" id="kalender-rad">
+<section id="kalender" class="calendar" style="text-align:center">
 <h2>Tilgjengelighet</h2>
+<div style="display:inline-block;text-align:left">
 <div class="apple-kalender" id="appleKalender">
 <div class="kal-header">
 <button class="kal-nav" id="kal-forrige">&#8249;</button>
@@ -85,6 +95,7 @@
 <span class="kal-dot" style="background:#f59e0b;display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:12px"></span> 🎤 Mikrofon opptatt
 <span class="kal-dot" style="background:linear-gradient(90deg,#7c3aed 50%,#f59e0b 50%);display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:12px"></span> Begge opptatt
 <span class="kal-dot blå" style="margin-left:12px"></span> I dag
+</div>
 </div>
 </div>
 </section>
