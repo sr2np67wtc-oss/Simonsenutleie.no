@@ -163,7 +163,8 @@
 
     async function lastProduktene() {
         try {
-            const r = await fetch(`${API_BASE}/rental-products`);
+            const r = await fetch(`${API_BASE}/rental-products/availability`);
+            if (!r.ok) throw new Error();
             utleieProduktene = await r.json();
         } catch { utleieProduktene = []; }
 
@@ -201,32 +202,12 @@
         return `${ar}-${String(mnd+1).padStart(2,'0')}-${String(dag).padStart(2,'0')}`;
     }
 
-    function getUtstyrType() {
-        const el = document.querySelector('input[name="utstyr"]:checked');
-        if (!el) return 'both';
-        const p = utleieProduktene.find(p => p.name === el.value);
-        return p ? p.equipmentType : 'speaker';
-    }
-
-    function blokkererUtstyr(bookingType, valgtType) {
-        const bt = bookingType || 'both';
-        if (bt === 'both') return true;       // gammel/begge blokkerer alltid
-        if (valgtType === 'both') return true; // ønsker begge → blokkert av hva som helst
-        return bt === valgtType;
-    }
-
     function erOpptatt(d) {
-        const valgtType = getUtstyrType();
-        return bookedePeriodar.some(b =>
-            d >= b.startDate && d <= b.endDate && blokkererUtstyr(b.equipmentType, valgtType)
-        );
+        return bookedePeriodar.some(b => d >= b.startDate && d <= b.endDate);
     }
 
     function rangeHarKonflikt(s, e) {
-        const valgtType = getUtstyrType();
-        return bookedePeriodar.some(b =>
-            b.startDate <= e && b.endDate >= s && blokkererUtstyr(b.equipmentType, valgtType)
-        );
+        return bookedePeriodar.some(b => b.startDate <= e && b.endDate >= s);
     }
 
     function norskDato(d) {
@@ -387,16 +368,16 @@
                 if (radio.value === forhåndsValgt) { radio.checked = true; utstyrEndret(); break; }
             }
         }
-        try {
-            const r = await fetch(`${API_BASE}/bookings`);
-            if (r.ok) bookedePeriodar = await r.json();
-        } catch(e) {}
         tegneKalender();
     });
 
     function utstyrEndret() {
+        const valgt = document.querySelector('input[name="utstyr"]:checked');
+        const produkt = valgt ? utleieProduktene.find(p => p.name === valgt.value) : null;
+        bookedePeriodar = produkt?.blockedPeriods || [];
         nullstillDatoer();
         beregnPris();
+        tegneKalender();
     }
 
     function beregnPris() {
@@ -482,10 +463,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify(body),
             });
-            if (!r.ok) throw new Error();
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.error || 'Noe gikk galt');
             window.location.href = 'takk.html';
-        } catch {
-            feil.textContent    = 'Noe gikk galt. Prøv igjen eller send e-post direkte til simonsen.andreas@gmail.com';
+        } catch (error) {
+            feil.textContent = error instanceof Error && error.message.includes('opptatt')
+                ? 'Utstyret ble nettopp opptatt i den valgte perioden. Velg en annen dato eller et annet produkt.'
+                : 'Noe gikk galt. Prøv igjen eller send e-post direkte til simonsen.andreas@gmail.com';
             feil.style.display  = 'block';
             feil.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             btn.disabled    = false;
